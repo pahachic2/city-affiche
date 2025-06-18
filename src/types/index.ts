@@ -31,6 +31,11 @@ export interface Event {
   author?: User;
   votes: Vote[];
   messages: Message[];
+  upvotes: number;
+  downvotes: number;
+  rating: number;
+  commentsCount: number;
+  viewsCount: number;
   createdAt: Date;
   updatedAt: Date;
 }

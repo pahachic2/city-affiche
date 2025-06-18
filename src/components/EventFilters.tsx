@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { EVENT_CATEGORIES, CITIES } from '@/types';
 
 interface EventFiltersProps {
+  defaultCity?: string;
   onFiltersChange?: (filters: {
     city?: string;
     category?: string;
@@ -11,12 +12,21 @@ interface EventFiltersProps {
   }) => void;
 }
 
-export default function EventFilters({ onFiltersChange }: EventFiltersProps) {
+export default function EventFilters({ defaultCity, onFiltersChange }: EventFiltersProps) {
   const [filters, setFilters] = useState({
-    city: '',
+    city: defaultCity || '',
     category: '',
     search: '',
   });
+
+  // Обновляем фильтры при изменении defaultCity
+  useEffect(() => {
+    if (defaultCity) {
+      const newFilters = { ...filters, city: defaultCity };
+      setFilters(newFilters);
+      onFiltersChange?.(newFilters);
+    }
+  }, [defaultCity]);
 
   const handleFilterChange = (key: string, value: string) => {
     const newFilters = { ...filters, [key]: value };
@@ -25,7 +35,11 @@ export default function EventFilters({ onFiltersChange }: EventFiltersProps) {
   };
 
   const clearFilters = () => {
-    const clearedFilters = { city: '', category: '', search: '' };
+    const clearedFilters = { 
+      city: defaultCity || '', 
+      category: '', 
+      search: '' 
+    };
     setFilters(clearedFilters);
     onFiltersChange?.(clearedFilters);
   };
@@ -56,6 +70,7 @@ export default function EventFilters({ onFiltersChange }: EventFiltersProps) {
             value={filters.city}
             onChange={(e) => handleFilterChange('city', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            disabled={!!defaultCity} // Отключаем если город задан по умолчанию
           >
             <option value="">Все города</option>
             {CITIES.map((city) => (

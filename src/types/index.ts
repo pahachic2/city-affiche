@@ -8,6 +8,16 @@ export interface User {
   createdAt: Date;
 }
 
+export interface City {
+  _id: string;
+  name: string;
+  slug: string;
+  imageUrl: string;
+  eventsCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Event {
   _id: string;
   title: string;
@@ -103,4 +113,4 @@ export const CITIES = [
   'Волгоград'
 ] as const;
 
-export type City = typeof CITIES[number]; 
+export type CityName = typeof CITIES[number]; 

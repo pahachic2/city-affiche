@@ -204,11 +204,11 @@ export default function CityPage({ params }: CityPageProps) {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'rating' | 'date' | 'comments')}
-                className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white"
+                className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white text-gray-900"
               >
-                <option value="rating">🔥 Популярные</option>
-                <option value="date">📅 Новые</option>
-                <option value="comments">💬 Обсуждаемые</option>
+                <option value="rating" className="text-gray-900">🔥 Популярные</option>
+                <option value="date" className="text-gray-900">📅 Новые</option>
+                <option value="comments" className="text-gray-900">💬 Обсуждаемые</option>
               </select>
             </div>
           </div>

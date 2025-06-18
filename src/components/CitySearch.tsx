@@ -95,7 +95,7 @@ export default function CitySearch({ onCitySelect }: CitySearchProps) {
           onKeyDown={handleKeyDown}
           className="w-full px-4 py-2 pr-10 text-sm bg-white border border-gray-300 rounded-full 
                      focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-                     placeholder-gray-500"
+                     placeholder-gray-500 text-gray-900"
         />
         
         {/* Иконка поиска */}

@@ -1,9 +1,14 @@
 const mongoose = require('mongoose');
 
 require('dotenv').config({ path: __dirname + '/../.env.local' });
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/test';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 async function testConnection() {
+  if (!MONGODB_URI) {
+    console.error('❌ MONGODB_URI не найдена в .env.local');
+    process.exit(1);
+  }
+  
   try {
     console.log('🔗 Подключаемся к MongoDB:', MONGODB_URI);
     
@@ -38,4 +43,4 @@ async function testConnection() {
   }
 }
 
-testConnection(); 
+testConnection();  

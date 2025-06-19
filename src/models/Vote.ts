@@ -5,12 +5,12 @@ export interface IVote extends Omit<Vote, '_id'>, Document {}
 
 const VoteSchema = new Schema<IVote>({
   userId: {
-    type: String,
+    type: Schema.Types.ObjectId,
     required: true,
     ref: 'User',
   },
   eventId: {
-    type: String,
+    type: Schema.Types.ObjectId,
     required: true,
     ref: 'Event',
   },

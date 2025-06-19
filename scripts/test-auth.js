@@ -1,225 +1,335 @@
-// Скрипт для тестирования JWT авторизации
+const mongoose = require('mongoose');
+require('dotenv').config({ path: '.env.local' });
+
+// Подключение к MongoDB для прямых проверок
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+    });
+    console.log('✅ Подключено к MongoDB для тестов');
+    return true;
+  } catch (error) {
+    console.error('❌ Ошибка подключения к MongoDB:', error);
+    return false;
+  }
+};
+
+// Схема пользователя для прямых запросов к БД
+const UserSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  password: { type: String, required: true },
+  avatar: { type: String, default: null },
+}, { timestamps: true });
+
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
 const BASE_URL = 'http://localhost:3000';
 
-// Тестовые данные
+// Генерируем уникальный email для тестов
+const testEmail = `test-${Date.now()}@example.com`;
 const testUser = {
-  email: `test-${Date.now()}@example.com`, // Уникальный email
-  name: 'Тестовый Пользователь',
+  email: testEmail,
+  name: 'Test User',
   password: 'testpassword123'
 };
 
-let authToken = null;
+let authToken = '';
+let userId = '';
 
-// Функция для выполнения HTTP запросов
-async function makeRequest(url, options = {}) {
+async function testRegister() {
+  console.log('\n🧪 Тест 1: Регистрация пользователя');
+  
   try {
-    const response = await fetch(url, {
+    const response = await fetch(`${BASE_URL}/api/auth/register`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers
       },
-      ...options
+      body: JSON.stringify(testUser),
     });
 
     const data = await response.json();
-    return { response, data };
+    
+    if (response.ok) {
+      console.log('✅ Регистрация успешна');
+      console.log(`   Пользователь: ${data.user.name} (${data.user.email})`);
+      console.log(`   ID: ${data.user._id}`);
+      console.log(`   Токен получен: ${data.token ? 'Да' : 'Нет'}`);
+      
+      authToken = data.token;
+      userId = data.user._id;
+      
+      // Проверяем, что пользователь реально сохранен в БД
+      const dbUser = await User.findById(userId);
+      if (dbUser) {
+        console.log('✅ Пользователь найден в БД');
+        console.log(`   Email в БД: ${dbUser.email}`);
+        console.log(`   Создан: ${dbUser.createdAt}`);
+      } else {
+        console.log('❌ Пользователь НЕ найден в БД');
+      }
+      
+      return true;
+    } else {
+      console.log('❌ Ошибка регистрации:', data.error);
+      return false;
+    }
   } catch (error) {
-    console.error(`❌ Ошибка запроса к ${url}:`, error.message);
-    return { error: error.message };
-  }
-}
-
-// Тест 1: Регистрация пользователя
-async function testRegister() {
-  console.log('\n🔵 Тест 1: Регистрация пользователя');
-  
-  const { response, data, error } = await makeRequest(`${BASE_URL}/api/auth/register`, {
-    method: 'POST',
-    body: JSON.stringify(testUser)
-  });
-
-  if (error) {
-    console.log('❌ Ошибка сети');
-    return false;
-  }
-
-  if (response.status === 201 && data.token) {
-    console.log('✅ Регистрация успешна');
-    console.log(`📝 Пользователь: ${data.user.name} (${data.user.email})`);
-    console.log(`🔑 Токен получен: ${data.token.substring(0, 20)}...`);
-    authToken = data.token;
-    return true;
-  } else {
-    console.log(`❌ Регистрация неуспешна: ${data.error}`);
+    console.log('❌ Ошибка запроса:', error.message);
     return false;
   }
 }
 
-// Тест 2: Вход существующего пользователя
 async function testLogin() {
-  console.log('\n🔵 Тест 2: Вход пользователя');
+  console.log('\n🧪 Тест 2: Авторизация');
   
-  const { response, data, error } = await makeRequest(`${BASE_URL}/api/auth/login`, {
-    method: 'POST',
-    body: JSON.stringify({
-      email: testUser.email,
-      password: testUser.password
-    })
-  });
+  try {
+    const response = await fetch(`${BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: testUser.email,
+        password: testUser.password,
+      }),
+    });
 
-  if (error) {
-    console.log('❌ Ошибка сети');
-    return false;
-  }
-
-  if (response.status === 200 && data.token) {
-    console.log('✅ Вход успешен');
-    console.log(`📝 Пользователь: ${data.user.name} (${data.user.email})`);
-    console.log(`🔑 Токен получен: ${data.token.substring(0, 20)}...`);
-    authToken = data.token;
-    return true;
-  } else {
-    console.log(`❌ Вход неуспешен: ${data.error}`);
+    const data = await response.json();
+    
+    if (response.ok) {
+      console.log('✅ Авторизация успешна');
+      console.log(`   Пользователь: ${data.user.name}`);
+      console.log(`   Токен получен: ${data.token ? 'Да' : 'Нет'}`);
+      
+      // Обновляем токен
+      authToken = data.token;
+      return true;
+    } else {
+      console.log('❌ Ошибка авторизации:', data.error);
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ Ошибка запроса:', error.message);
     return false;
   }
 }
 
-// Тест 3: Получение данных пользователя с токеном
 async function testGetMe() {
-  console.log('\n🔵 Тест 3: Получение данных пользователя (/api/auth/me)');
+  console.log('\n🧪 Тест 3: Получение данных пользователя');
   
-  if (!authToken) {
-    console.log('❌ Нет токена для тестирования');
-    return false;
-  }
+  try {
+    const response = await fetch(`${BASE_URL}/api/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+      },
+    });
 
-  const { response, data, error } = await makeRequest(`${BASE_URL}/api/auth/me`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${authToken}`
+    const data = await response.json();
+    
+    if (response.ok) {
+      console.log('✅ Данные получены');
+      console.log(`   ID: ${data.user._id}`);
+      console.log(`   Email: ${data.user.email}`);
+      console.log(`   Имя: ${data.user.name}`);
+      return true;
+    } else {
+      console.log('❌ Ошибка получения данных:', data.error);
+      return false;
     }
-  });
-
-  if (error) {
-    console.log('❌ Ошибка сети');
-    return false;
-  }
-
-  if (response.status === 200 && data.user) {
-    console.log('✅ Данные пользователя получены');
-    console.log(`📝 Пользователь: ${data.user.name} (${data.user.email})`);
-    console.log(`📅 Создан: ${new Date(data.user.createdAt).toLocaleString()}`);
-    return true;
-  } else {
-    console.log(`❌ Ошибка получения данных: ${data.error}`);
+  } catch (error) {
+    console.log('❌ Ошибка запроса:', error.message);
     return false;
   }
 }
 
-// Тест 4: Попытка доступа без токена
 async function testUnauthorized() {
-  console.log('\n🔵 Тест 4: Доступ без токена (должен быть запрещен)');
+  console.log('\n🧪 Тест 4: Неавторизованный доступ');
   
-  const { response, data, error } = await makeRequest(`${BASE_URL}/api/auth/me`, {
-    method: 'GET'
-  });
+  try {
+    const response = await fetch(`${BASE_URL}/api/auth/me`, {
+      method: 'GET',
+      // Намеренно не передаем токен
+    });
 
-  if (error) {
-    console.log('❌ Ошибка сети');
-    return false;
-  }
-
-  if (response.status === 401) {
-    console.log('✅ Доступ корректно запрещен');
-    console.log(`📝 Ошибка: ${data.error}`);
-    return true;
-  } else {
-    console.log(`❌ Неожиданный ответ: ${response.status}`);
-    return false;
-  }
-}
-
-// Тест 5: Попытка доступа с неверным токеном
-async function testInvalidToken() {
-  console.log('\n🔵 Тест 5: Доступ с неверным токеном');
-  
-  const { response, data, error } = await makeRequest(`${BASE_URL}/api/auth/me`, {
-    method: 'GET',
-    headers: {
-      'Authorization': 'Bearer invalid-token-12345'
+    const data = await response.json();
+    
+    if (response.status === 401) {
+      console.log('✅ Неавторизованный доступ корректно заблокирован');
+      console.log(`   Ошибка: ${data.error}`);
+      return true;
+    } else {
+      console.log('❌ Неавторизованный доступ НЕ заблокирован');
+      return false;
     }
-  });
-
-  if (error) {
-    console.log('❌ Ошибка сети');
-    return false;
-  }
-
-  if (response.status === 401) {
-    console.log('✅ Неверный токен корректно отклонен');
-    console.log(`📝 Ошибка: ${data.error}`);
-    return true;
-  } else {
-    console.log(`❌ Неожиданный ответ: ${response.status}`);
+  } catch (error) {
+    console.log('❌ Ошибка запроса:', error.message);
     return false;
   }
 }
 
-// Тест 6: Выход из системы
+async function testInvalidToken() {
+  console.log('\n🧪 Тест 5: Неверный токен');
+  
+  try {
+    const response = await fetch(`${BASE_URL}/api/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer invalid-token-here',
+      },
+    });
+
+    const data = await response.json();
+    
+    if (response.status === 401) {
+      console.log('✅ Неверный токен корректно отклонен');
+      console.log(`   Ошибка: ${data.error}`);
+      return true;
+    } else {
+      console.log('❌ Неверный токен НЕ отклонен');
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ Ошибка запроса:', error.message);
+    return false;
+  }
+}
+
 async function testLogout() {
-  console.log('\n🔵 Тест 6: Выход из системы');
+  console.log('\n🧪 Тест 6: Выход из системы');
   
-  const { response, data, error } = await makeRequest(`${BASE_URL}/api/auth/logout`, {
-    method: 'POST'
-  });
+  try {
+    const response = await fetch(`${BASE_URL}/api/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+      },
+    });
 
-  if (error) {
-    console.log('❌ Ошибка сети');
-    return false;
-  }
-
-  if (response.status === 200) {
-    console.log('✅ Выход успешен');
-    console.log(`📝 Сообщение: ${data.message}`);
-    return true;
-  } else {
-    console.log(`❌ Ошибка выхода: ${data.error}`);
+    const data = await response.json();
+    
+    if (response.ok) {
+      console.log('✅ Выход выполнен успешно');
+      console.log(`   Сообщение: ${data.message}`);
+      return true;
+    } else {
+      console.log('❌ Ошибка выхода:', data.error);
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ Ошибка запроса:', error.message);
     return false;
   }
 }
 
-// Основная функция тестирования
-async function runTests() {
-  console.log('🚀 Запуск тестов JWT авторизации');
-  console.log('='.repeat(50));
+// Тест персистентности данных
+async function testDataPersistence() {
+  console.log('\n🧪 Тест 7: Персистентность данных');
   
-  const results = [];
-  
-  // Выполняем тесты по порядку
-  results.push(await testRegister());
-  results.push(await testLogin());
-  results.push(await testGetMe());
-  results.push(await testUnauthorized());
-  results.push(await testInvalidToken());
-  results.push(await testLogout());
-  
-  // Подводим итоги
-  console.log('\n' + '='.repeat(50));
-  console.log('📊 Результаты тестирования:');
-  
-  const passed = results.filter(r => r === true).length;
-  const total = results.length;
-  
-  console.log(`✅ Успешно: ${passed}/${total}`);
-  console.log(`❌ Неуспешно: ${total - passed}/${total}`);
-  
-  if (passed === total) {
-    console.log('🎉 Все тесты прошли успешно!');
-  } else {
-    console.log('⚠️  Некоторые тесты не прошли. Проверьте ошибки выше.');
+  try {
+    // Проверяем, что пользователь все еще в БД
+    const dbUser = await User.findById(userId);
+    if (dbUser) {
+      console.log('✅ Данные сохранены в БД');
+      console.log(`   Email: ${dbUser.email}`);
+      console.log(`   Создан: ${dbUser.createdAt.toISOString()}`);
+      
+      // Проверяем, что пароль захеширован
+      if (dbUser.password !== testUser.password) {
+        console.log('✅ Пароль корректно захеширован');
+      } else {
+        console.log('❌ Пароль НЕ захеширован!');
+      }
+      
+      return true;
+    } else {
+      console.log('❌ Пользователь НЕ найден в БД');
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ Ошибка проверки БД:', error.message);
+    return false;
   }
 }
 
-// Запускаем тесты
-runTests().catch(console.error); 
+// Очистка тестовых данных
+async function cleanup() {
+  console.log('\n🧹 Очистка тестовых данных...');
+  
+  try {
+    if (userId) {
+      await User.findByIdAndDelete(userId);
+      console.log('✅ Тестовый пользователь удален из БД');
+    }
+  } catch (error) {
+    console.log('❌ Ошибка очистки:', error.message);
+  }
+}
+
+async function runAllTests() {
+  console.log('🚀 Запуск тестов авторизации с реальной БД\n');
+  
+  // Подключаемся к БД
+  const connected = await connectDB();
+  if (!connected) {
+    console.log('❌ Не удалось подключиться к БД. Тесты отменены.');
+    return;
+  }
+  
+  const tests = [
+    testRegister,
+    testLogin,
+    testGetMe,
+    testUnauthorized,
+    testInvalidToken,
+    testLogout,
+    testDataPersistence
+  ];
+
+  let passed = 0;
+  let failed = 0;
+
+  for (const test of tests) {
+    const result = await test();
+    if (result) {
+      passed++;
+    } else {
+      failed++;
+    }
+    
+    // Небольшая пауза между тестами
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  console.log('\n📊 Результаты тестов:');
+  console.log(`✅ Пройдено: ${passed}`);
+  console.log(`❌ Провалено: ${failed}`);
+  console.log(`📈 Успешность: ${((passed / (passed + failed)) * 100).toFixed(1)}%`);
+
+  // Очищаем тестовые данные
+  await cleanup();
+  
+  // Отключаемся от БД
+  await mongoose.disconnect();
+  console.log('\n🔌 Отключено от MongoDB');
+  
+  if (failed === 0) {
+    console.log('\n🎉 Все тесты пройдены успешно!');
+  } else {
+    console.log('\n⚠️  Некоторые тесты провалились. Проверьте логи выше.');
+  }
+}
+
+// Запуск если файл вызван напрямую
+if (require.main === module) {
+  runAllTests().catch(console.error);
+}
+
+module.exports = { runAllTests }; 

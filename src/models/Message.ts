@@ -5,12 +5,12 @@ export interface IMessage extends Omit<Message, '_id' | 'sender'>, Document {}
 
 const MessageSchema = new Schema<IMessage>({
   eventId: {
-    type: String,
+    type: Schema.Types.ObjectId,
     required: true,
     ref: 'Event',
   },
   senderId: {
-    type: String,
+    type: Schema.Types.ObjectId,
     required: true,
     ref: 'User',
   },

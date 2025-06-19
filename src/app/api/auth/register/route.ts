@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import connectDB from '@/lib/mongodb';
+import connectDB, { checkConnection } from '@/lib/mongodb';
 import User from '@/models/User';
 import { generateToken } from '@/lib/jwt';
 
@@ -16,8 +16,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Подключение к базе данных
+    // Проверка подключения к базе данных
     await connectDB();
+    const isConnected = await checkConnection();
+    if (!isConnected) {
+      console.error('Нет подключения к базе данных');
+      return NextResponse.json(
+        { error: 'Сервис временно недоступен' },
+        { status: 503 }
+      );
+    }
 
     // Проверка существования пользователя с таким email
     const existingUser = await User.findOne({ email });
@@ -40,6 +48,7 @@ export async function POST(request: NextRequest) {
     });
 
     await newUser.save();
+    console.log('✅ Пользователь сохранен в БД:', newUser._id);
 
     // Генерируем JWT токен
     const token = generateToken(newUser._id.toString(), newUser.email);
@@ -62,8 +71,17 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Ошибка при регистрации:', error);
+    
+    // Обработка ошибок дублирования (MongoDB unique constraint)
+    if (error.code === 11000) {
+      return NextResponse.json(
+        { error: 'Пользователь с таким email уже существует' },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Внутренняя ошибка сервера' },
       { status: 500 }

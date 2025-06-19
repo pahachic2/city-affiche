@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { Event } from '@/types';
 
-export interface IEvent extends Omit<Event, '_id' | 'author' | 'votes' | 'messages'>, Document {
+export interface IEvent extends Omit<Event, '_id' | 'author' | 'votes' | 'messages' | 'authorId'>, Document {
+  authorId: mongoose.Types.ObjectId;
   votes: mongoose.Types.ObjectId[];
   messages: mongoose.Types.ObjectId[];
   upvotes: number;
@@ -47,7 +48,7 @@ const EventSchema = new Schema<IEvent>({
     default: false,
   },
   authorId: {
-    type: String,
+    type: Schema.Types.ObjectId,
     required: true,
     ref: 'User',
   },

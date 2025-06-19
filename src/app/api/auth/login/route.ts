@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import connectDB from '@/lib/mongodb';
+import connectDB, { checkConnection } from '@/lib/mongodb';
 import User from '@/models/User';
 import { generateToken } from '@/lib/jwt';
 
@@ -16,8 +16,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Подключение к базе данных
+    // Проверка подключения к базе данных
     await connectDB();
+    const isConnected = await checkConnection();
+    if (!isConnected) {
+      console.error('Нет подключения к базе данных');
+      return NextResponse.json(
+        { error: 'Сервис временно недоступен' },
+        { status: 503 }
+      );
+    }
 
     // Поиск пользователя по email
     const user = await User.findOne({ email });
@@ -36,6 +44,8 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    console.log('✅ Пользователь авторизован:', user._id);
 
     // Генерируем JWT токен
     const token = generateToken(user._id.toString(), user.email);

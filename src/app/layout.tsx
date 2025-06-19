@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,10 +43,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
-        {/* Основной контейнер с адаптивными отступами */}
-        <div className="min-h-screen bg-gray-50">
-          {children}
-        </div>
+        {/* Провайдер авторизации */}
+        <AuthProvider>
+          {/* Основной контейнер с адаптивными отступами */}
+          <div className="min-h-screen bg-gray-50">
+            {children}
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Event from '@/models/Event';
 import User from '@/models/User';
+import { requireAuth } from '@/lib/auth-middleware';
 
 // GET /api/events - получение списка мероприятий с фильтрами
 export async function GET(request: NextRequest) {
@@ -60,16 +61,25 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/events - создание нового мероприятия
+// POST /api/events - создание нового мероприятия (только для авторизованных)
 export async function POST(request: NextRequest) {
   try {
+    // Проверяем авторизацию
+    const authResult = await requireAuth(request);
+    if ('error' in authResult) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      );
+    }
+
     await connectDB();
 
     const body = await request.json();
-    const { title, description, image, city, category, date, isOnline, authorId } = body;
+    const { title, description, image, city, category, date, isOnline } = body;
 
-    // Базовая валидация
-    if (!title || !description || !city || !category || !date || !authorId) {
+    // Базовая валидация (authorId больше не нужен в body)
+    if (!title || !description || !city || !category || !date) {
       return NextResponse.json(
         { error: 'Заполните все обязательные поля' },
         { status: 400 }
@@ -84,14 +94,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Проверяем существование пользователя
-    const user = await User.findById(authorId);
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Пользователь не найден' },
-        { status: 404 }
-      );
-    }
+    // Используем authorId из токена авторизации
+    const authorId = authResult.user._id;
 
     const event = new Event({
       title,
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest) {
       category,
       date: new Date(date),
       isOnline: Boolean(isOnline),
-      authorId,
+      authorId: authorId.toString(),
     });
 
     await event.save();

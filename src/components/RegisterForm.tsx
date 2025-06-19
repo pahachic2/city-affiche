@@ -81,8 +81,14 @@ export default function RegisterForm() {
       const result = await register(formData.email, formData.name, formData.password);
       
       if (result.success) {
-        // Перенаправляем на главную страницу
-        router.push('/');
+        // Проверяем, есть ли сохраненный URL для редиректа
+        const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+        if (redirectUrl) {
+          sessionStorage.removeItem('redirectAfterLogin');
+          router.push(redirectUrl);
+        } else {
+          router.push('/');
+        }
       } else {
         setErrors({ submit: result.error || 'Ошибка регистрации' });
       }

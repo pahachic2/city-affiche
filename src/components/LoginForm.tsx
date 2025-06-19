@@ -74,8 +74,14 @@ export default function LoginForm() {
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
-        // Перенаправляем на главную страницу
-        router.push('/');
+        // Проверяем, есть ли сохраненный URL для редиректа
+        const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+        if (redirectUrl) {
+          sessionStorage.removeItem('redirectAfterLogin');
+          router.push(redirectUrl);
+        } else {
+          router.push('/');
+        }
       } else {
         setErrors({ submit: result.error || 'Ошибка входа' });
       }

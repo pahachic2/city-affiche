@@ -221,6 +221,7 @@ export default function CityPage({ params }: CityPageProps) {
                 key={event._id}
                 event={event}
                 onVote={handleVote}
+                citySlug={citySlug}
               />
             ))}
           </div>

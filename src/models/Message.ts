@@ -1,45 +1,47 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { Message } from '@/types';
 
-export interface IMessage extends Omit<Message, '_id' | 'sender'>, Document {}
+export interface IMessage extends Document {
+  eventId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
+  username: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const MessageSchema = new Schema<IMessage>({
   eventId: {
     type: Schema.Types.ObjectId,
-    required: true,
     ref: 'Event',
-  },
-  senderId: {
-    type: Schema.Types.ObjectId,
     required: true,
+    index: true
+  },
+  userId: {
+    type: Schema.Types.ObjectId,
     ref: 'User',
+    required: true,
+    index: true
   },
-  text: {
+  username: {
     type: String,
-    trim: true,
-    maxlength: 1000,
+    required: true,
+    maxlength: 50
   },
-  imageUrl: {
+  content: {
     type: String,
-    default: null,
-  },
-  timestamp: {
-    type: Date,
-    default: Date.now,
-  },
-}, {
-  timestamps: true,
-});
-
-// Валидация: сообщение должно содержать либо текст, либо изображение
-MessageSchema.pre('save', function() {
-  if (!this.text && !this.imageUrl) {
-    throw new Error('Сообщение должно содержать текст или изображение');
+    required: true,
+    minlength: 1,
+    maxlength: 500,
+    trim: true
   }
+}, {
+  timestamps: true
 });
 
-// Индексы для оптимизации запросов
-MessageSchema.index({ eventId: 1, timestamp: -1 });
-MessageSchema.index({ senderId: 1 });
+// Составной индекс для быстрого получения сообщений события
+MessageSchema.index({ eventId: 1, createdAt: -1 });
+
+// Индекс для удаления сообщений пользователя
+MessageSchema.index({ userId: 1, createdAt: -1 });
 
 export default mongoose.models.Message || mongoose.model<IMessage>('Message', MessageSchema); 

@@ -49,11 +49,11 @@ export interface Event {
 export interface Message {
   _id: string;
   eventId: string;
-  senderId: string;
-  sender?: User;
-  text?: string;
-  imageUrl?: string;
-  timestamp: Date;
+  userId: string;
+  username: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Vote {
@@ -89,9 +89,7 @@ export interface CreateEventData {
 }
 
 export interface CreateMessageData {
-  eventId: string;
-  text?: string;
-  imageUrl?: string;
+  content: string;
 }
 
 // Категории мероприятий (Частное - первое и дефолтное)

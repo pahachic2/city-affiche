@@ -4,9 +4,10 @@ import Link from 'next/link';
 
 interface EventCardProps {
   event: Event;
+  citySlug?: string;
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, citySlug }: EventCardProps) {
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('ru-RU', {
       day: 'numeric',
@@ -103,7 +104,7 @@ export default function EventCard({ event }: EventCardProps) {
       {/* Контент - адаптивные отступы */}
       <div className="p-3 sm:p-4 md:p-6">
         {/* Заголовок - адаптивный размер шрифта */}
-        <Link href={`/events/${event._id}`}>
+        <Link href={citySlug ? `/city/${citySlug}/event/${event._id}` : `/events/${event._id}`}>
           <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 hover:text-indigo-600 transition-colors line-clamp-2">
             {event.title}
           </h3>

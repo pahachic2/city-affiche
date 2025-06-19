@@ -8,9 +8,10 @@ import { Event } from '@/types';
 interface RedditEventCardProps {
   event: Event;
   onVote?: (eventId: string, voteType: 'up' | 'down') => void;
+  citySlug?: string;
 }
 
-export default function RedditEventCard({ event, onVote }: RedditEventCardProps) {
+export default function RedditEventCard({ event, onVote, citySlug }: RedditEventCardProps) {
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   const [currentRating, setCurrentRating] = useState(event.upvotes - event.downvotes);
   const [isVoting, setIsVoting] = useState(false);
@@ -81,7 +82,9 @@ export default function RedditEventCard({ event, onVote }: RedditEventCardProps)
   };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/event/${event._id}`;
+    const url = citySlug 
+      ? `${window.location.origin}/city/${citySlug}/event/${event._id}`
+      : `${window.location.origin}/event/${event._id}`;
     
     if (navigator.share) {
       try {
@@ -149,7 +152,7 @@ export default function RedditEventCard({ event, onVote }: RedditEventCardProps)
         {/* Основной контент */}
         <div className="flex-1 p-4">
           {/* Заголовок */}
-          <Link href={`/event/${event._id}`} className="block group">
+          <Link href={citySlug ? `/city/${citySlug}/event/${event._id}` : `/event/${event._id}`} className="block group">
             <h2 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-2">
               {event.title}
             </h2>
@@ -157,7 +160,7 @@ export default function RedditEventCard({ event, onVote }: RedditEventCardProps)
 
           {/* Изображение */}
           {event.image && (
-            <Link href={`/event/${event._id}`} className="block mb-3">
+            <Link href={citySlug ? `/city/${citySlug}/event/${event._id}` : `/event/${event._id}`} className="block mb-3">
               <div className="relative w-full h-48 rounded-md overflow-hidden">
                 {event.image.startsWith('data:image/') ? (
                   // Base64 изображение
@@ -197,7 +200,7 @@ export default function RedditEventCard({ event, onVote }: RedditEventCardProps)
             <div className="flex items-center space-x-4">
               {/* Кнопка комментариев */}
               <Link 
-                href={`/event/${event._id}#comments`}
+                href={citySlug ? `/city/${citySlug}/event/${event._id}#comments` : `/event/${event._id}#comments`}
                 className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

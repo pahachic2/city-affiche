@@ -24,10 +24,15 @@ export interface Event {
   title: string;
   description: string;
   image?: string;
+  imageType?: string;
   city: string;
   category: string;
   date: Date;
+  time?: string;
   isOnline: boolean;
+  isRecurring: boolean;
+  recurringType?: 'weekly' | 'monthly';
+  recurringEndDate?: Date;
   authorId: string;
   author?: User;
   votes: Vote[];
@@ -72,10 +77,15 @@ export interface CreateEventData {
   title: string;
   description: string;
   image?: string;
+  imageType?: string;
   city: string;
   category: string;
   date: Date;
+  time?: string;
   isOnline: boolean;
+  isRecurring?: boolean;
+  recurringType?: 'weekly' | 'monthly';
+  recurringEndDate?: Date;
 }
 
 export interface CreateMessageData {
@@ -84,9 +94,10 @@ export interface CreateMessageData {
   imageUrl?: string;
 }
 
-// Категории мероприятий
+// Категории мероприятий (Частное - первое и дефолтное)
 export const EVENT_CATEGORIES = [
-  'Концерты',
+  'Частное',
+  'Музыка',
   'Театр',
   'Кино',
   'Выставки',
@@ -95,6 +106,11 @@ export const EVENT_CATEGORIES = [
   'Бизнес',
   'Развлечения',
   'Культура',
+  'Еда и напитки',
+  'Семейные',
+  'Здоровье',
+  'Технологии',
+  'Природа',
   'Другое'
 ] as const;
 

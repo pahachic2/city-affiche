@@ -159,16 +159,30 @@ export default function RedditEventCard({ event, onVote }: RedditEventCardProps)
           {event.image && (
             <Link href={`/event/${event._id}`} className="block mb-3">
               <div className="relative w-full h-48 rounded-md overflow-hidden">
-                <Image
-                  src={event.image}
-                  alt={event.title}
-                  fill
-                  className="object-cover hover:scale-105 transition-transform duration-200"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                  }}
-                />
+                {event.image.startsWith('data:image/') ? (
+                  // Base64 изображение
+                  <img
+                    src={event.image}
+                    alt={event.title}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  // URL изображение (для обратной совместимости)
+                  <Image
+                    src={event.image}
+                    alt={event.title}
+                    fill
+                    className="object-cover hover:scale-105 transition-transform duration-200"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                )}
               </div>
             </Link>
           )}

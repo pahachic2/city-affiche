@@ -12,14 +12,24 @@ export default function EventCard({ event }: EventCardProps) {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
+  };
+
+  const formatTime = (time?: string) => {
+    if (!time) return '';
+    return time;
+  };
+
+  const formatDateTime = (date: Date, time?: string) => {
+    const dateStr = formatDate(date);
+    const timeStr = formatTime(time);
+    return timeStr ? `${dateStr} в ${timeStr}` : dateStr;
   };
 
   const getCategoryIcon = (category: string) => {
     const icons: Record<string, string> = {
-      'Концерты': '🎵',
+      'Частное': '🏠',
+      'Музыка': '🎵',
       'Театр': '🎭',
       'Кино': '🎬',
       'Выставки': '🎨',
@@ -28,9 +38,21 @@ export default function EventCard({ event }: EventCardProps) {
       'Бизнес': '💼',
       'Развлечения': '🎪',
       'Культура': '🏛️',
+      'Еда и напитки': '🍽️',
+      'Семейные': '👨‍👩‍👧‍👦',
+      'Здоровье': '💪',
+      'Технологии': '💻',
+      'Природа': '🌳',
       'Другое': '📅',
+      // Старые категории для обратной совместимости
+      'Концерты': '🎵',
     };
     return icons[category] || '📅';
+  };
+
+  // Проверяем, является ли изображение Base64
+  const isBase64Image = (image: string) => {
+    return image.startsWith('data:image/');
   };
 
   return (
@@ -39,18 +61,42 @@ export default function EventCard({ event }: EventCardProps) {
       {/* Изображение - адаптивная высота */}
       {event.image ? (
         <div className="relative h-32 sm:h-40 md:h-48">
-          <Image
-            src={event.image}
-            alt={event.title}
-            fill
-            className="object-cover"
-          />
+          {isBase64Image(event.image) ? (
+            // Base64 изображение
+            <img
+              src={event.image}
+              alt={event.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            // URL изображение (для обратной совместимости)
+            <Image
+              src={event.image}
+              alt={event.title}
+              fill
+              className="object-cover"
+            />
+          )}
+          
+          {/* Индикатор повторяющегося события */}
+          {event.isRecurring && (
+            <div className="absolute top-2 left-2 bg-indigo-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+              🔄 {event.recurringType === 'weekly' ? 'Еженедельно' : 'Ежемесячно'}
+            </div>
+          )}
         </div>
       ) : (
-        <div className="h-32 sm:h-40 md:h-48 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+        <div className="h-32 sm:h-40 md:h-48 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center relative">
           <span className="text-4xl sm:text-5xl md:text-6xl">
             {getCategoryIcon(event.category)}
           </span>
+          
+          {/* Индикатор повторяющегося события */}
+          {event.isRecurring && (
+            <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded-full text-xs font-medium">
+              🔄 {event.recurringType === 'weekly' ? 'Еженедельно' : 'Ежемесячно'}
+            </div>
+          )}
         </div>
       )}
 
@@ -70,10 +116,10 @@ export default function EventCard({ event }: EventCardProps) {
 
         {/* Метаинформация - адаптивные отступы */}
         <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
-          {/* Дата */}
+          {/* Дата и время */}
           <div className="flex items-center text-xs sm:text-sm text-gray-500">
             <span className="mr-2">📅</span>
-            <span className="truncate">{formatDate(event.date)}</span>
+            <span className="truncate">{formatDateTime(event.date, event.time)}</span>
           </div>
 
           {/* Город */}
@@ -102,7 +148,10 @@ export default function EventCard({ event }: EventCardProps) {
               💬 {event.messages?.length || 0}
             </span>
             <span className="flex items-center">
-              👍 {event.votes?.filter(v => v.value === 1).length || 0}
+              👍 {event.upvotes || 0}
+            </span>
+            <span className="flex items-center">
+              👎 {event.downvotes || 0}
             </span>
           </div>
         </div>

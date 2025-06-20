@@ -175,16 +175,16 @@ export default function RedditEventCard({ event, onVote, citySlug }: RedditEvent
                   />
                 ) : (
                   // URL изображение (для обратной совместимости)
-                  <Image
-                    src={event.image}
-                    alt={event.title}
-                    fill
-                    className="object-cover hover:scale-105 transition-transform duration-200"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                    }}
-                  />
+                <Image
+                  src={event.image}
+                  alt={event.title}
+                  fill
+                  className="object-cover hover:scale-105 transition-transform duration-200"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
                 )}
               </div>
             </Link>

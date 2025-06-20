@@ -249,9 +249,9 @@ export default function CityPage({ params }: CityPageProps) {
                 В городе {city?.name} пока не добавлено ни одного мероприятия
               </p>
               <Link href={`/city/${citySlug}/create-event`}>
-                <button className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">
-                  Добавить первое мероприятие
-                </button>
+              <button className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">
+                Добавить первое мероприятие
+              </button>
               </Link>
             </div>
           )}
@@ -266,9 +266,9 @@ export default function CityPage({ params }: CityPageProps) {
         {/* Плавающая кнопка создания мероприятия */}
         <div className="fixed bottom-6 right-6">
           <Link href={`/city/${citySlug}/create-event`}>
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg transition-all duration-200 hover:scale-110 flex items-center justify-center w-14 h-14 text-2xl font-bold active:scale-95">
-              +
-            </button>
+          <button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg transition-all duration-200 hover:scale-110 flex items-center justify-center w-14 h-14 text-2xl font-bold active:scale-95">
+            +
+          </button>
           </Link>
         </div>
       </div>

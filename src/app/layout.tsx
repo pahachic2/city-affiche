@@ -45,10 +45,10 @@ export default function RootLayout({
       >
         {/* Провайдер авторизации */}
         <AuthProvider>
-          {/* Основной контейнер с адаптивными отступами */}
-          <div className="min-h-screen bg-gray-50">
-            {children}
-          </div>
+        {/* Основной контейнер с адаптивными отступами */}
+        <div className="min-h-screen bg-gray-50">
+          {children}
+        </div>
         </AuthProvider>
       </body>
     </html>

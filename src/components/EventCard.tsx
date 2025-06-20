@@ -71,12 +71,12 @@ export default function EventCard({ event, citySlug }: EventCardProps) {
             />
           ) : (
             // URL изображение (для обратной совместимости)
-            <Image
-              src={event.image}
-              alt={event.title}
-              fill
-              className="object-cover"
-            />
+          <Image
+            src={event.image}
+            alt={event.title}
+            fill
+            className="object-cover"
+          />
           )}
           
           {/* Индикатор повторяющегося события */}

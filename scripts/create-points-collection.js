@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
+require('dotenv').config({ path: '.env.local' });
 
-// Строка подключения к MongoDB (база city-affiche)
-const MONGODB_URI = 'mongodb://GRAFF:G3432664499@localhost:27017/city-affiche?authSource=admin';
+// Используем переменную окружения для подключения к MongoDB
+const MONGODB_URI = process.env.MONGODB_URI + 'city-affiche';
 
 // Подключение к MongoDB
 const connectDB = async () => {

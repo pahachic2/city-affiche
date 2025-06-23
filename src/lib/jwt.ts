@@ -31,7 +31,7 @@ export function verifyToken(token: string): JwtPayload {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     return decoded;
-  } catch (error) {
+  } catch {
     throw new Error('Недействительный токен');
   }
 }
@@ -44,7 +44,7 @@ export function refreshToken(token: string): string {
     const decoded = verifyToken(token);
     // Создаем новый токен с теми же данными
     return generateToken(decoded.userId, decoded.email);
-  } catch (error) {
+  } catch {
     throw new Error('Невозможно обновить токен');
   }
 }

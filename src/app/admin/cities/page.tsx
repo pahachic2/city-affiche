@@ -24,8 +24,8 @@ export default function AdminCitiesPage() {
       if (!response.ok) throw new Error('Ошибка загрузки');
       const data = await response.json();
       setCities(data.cities || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка');
+    } catch {
+      setError('Ошибка при загрузке городов');
     } finally {
       setLoading(false);
     }
@@ -45,10 +45,10 @@ export default function AdminCitiesPage() {
         fetchCities();
         alert('Город создан!');
       } else {
-        const error = await response.json();
-        alert(`Ошибка: ${error.error}`);
+        const errorData = await response.json();
+        alert(`Ошибка: ${errorData.error}`);
       }
-    } catch (error) {
+    } catch {
       alert('Ошибка создания города');
     }
   };
@@ -68,7 +68,7 @@ export default function AdminCitiesPage() {
       } else {
         alert('Ошибка обновления');
       }
-    } catch (error) {
+    } catch {
       alert('Ошибка обновления изображения');
     }
   };

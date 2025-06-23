@@ -92,7 +92,7 @@ export default function RegisterForm() {
       } else {
         setErrors({ submit: result.error || 'Ошибка регистрации' });
       }
-    } catch (error) {
+    } catch {
       setErrors({ submit: 'Произошла ошибка. Попробуйте еще раз.' });
     } finally {
       setIsLoading(false);

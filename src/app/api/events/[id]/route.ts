@@ -8,13 +8,14 @@ import { verifyToken } from '@/lib/jwt';
 // GET /api/events/[id] - получить событие по ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
     // Находим событие
-    const event = await Event.findById(params.id).lean();
+    const event = await Event.findById(id).lean();
     if (!event) {
       return NextResponse.json(
         { error: 'Событие не найдено' },
@@ -23,7 +24,8 @@ export async function GET(
     }
 
     // Получаем информацию об авторе
-    const author = await User.findById((event as any).authorId).select('name email').lean();
+    const eventData = event as unknown as { authorId: string };
+    const author = await User.findById(eventData.authorId).select('name email').lean();
     
     // Добавляем автора к событию
     const eventWithAuthor = {
@@ -32,7 +34,7 @@ export async function GET(
     };
 
     // Увеличиваем счетчик просмотров (опционально)
-    await Event.findByIdAndUpdate(params.id, {
+    await Event.findByIdAndUpdate(id, {
       $inc: { viewsCount: 1 }
     });
 
@@ -50,10 +52,11 @@ export async function GET(
 // DELETE /api/events/[id] - удалить событие
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
     // Проверяем авторизацию
     const authHeader = request.headers.get('authorization');
@@ -74,7 +77,7 @@ export async function DELETE(
     }
 
     // Находим событие
-    const event = await Event.findById(params.id);
+    const event = await Event.findById(id);
     if (!event) {
       return NextResponse.json(
         { error: 'Событие не найдено' },
@@ -91,10 +94,10 @@ export async function DELETE(
     }
 
     // Удаляем все сообщения события
-    await Message.deleteMany({ eventId: params.id });
+    await Message.deleteMany({ eventId: id });
 
     // Удаляем само событие
-    await Event.findByIdAndDelete(params.id);
+    await Event.findByIdAndDelete(id);
 
     return NextResponse.json(
       { message: 'Событие успешно удалено' },

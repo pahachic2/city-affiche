@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function UserMenu() {
@@ -46,9 +48,11 @@ export default function UserMenu() {
         {/* Аватар */}
         <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-medium">
           {user.avatar ? (
-            <img
+            <Image
               src={user.avatar}
               alt={user.name}
+              width={32}
+              height={32}
               className="w-8 h-8 rounded-full object-cover"
             />
           ) : (
@@ -83,13 +87,13 @@ export default function UserMenu() {
             </div>
             
             {/* Пункты меню */}
-            <a
+            <Link
               href="/"
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               onClick={() => setIsOpen(false)}
             >
               ➕ Создать мероприятие
-            </a>
+            </Link>
             
             <a
               href="#"

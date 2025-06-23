@@ -18,7 +18,13 @@ export interface AuthenticatedRequest extends NextRequest {
  */
 export async function authenticate(request: NextRequest): Promise<{
   success: boolean;
-  user?: any;
+  user?: {
+    _id: string;
+    email: string;
+    name: string;
+    avatar?: string;
+    createdAt: Date;
+  };
   error?: string;
 }> {
   try {
@@ -37,7 +43,7 @@ export async function authenticate(request: NextRequest): Promise<{
     let decoded: JwtPayload;
     try {
       decoded = verifyToken(token);
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: 'Недействительный токен'
@@ -59,7 +65,13 @@ export async function authenticate(request: NextRequest): Promise<{
 
     return {
       success: true,
-      user
+      user: user as unknown as {
+        _id: string;
+        email: string;
+        name: string;
+        avatar?: string;
+        createdAt: Date;
+      }
     };
 
   } catch (error) {

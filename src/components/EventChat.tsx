@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Message } from '@/types';
 
@@ -16,13 +16,13 @@ export default function EventChat({ eventId, isOrganizer }: EventChatProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Функция загрузки сообщений
-  const fetchMessages = async (showLoading = false) => {
+  const fetchMessages = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setIsLoading(true);
       
@@ -30,18 +30,16 @@ export default function EventChat({ eventId, isOrganizer }: EventChatProps) {
       if (response.ok) {
         const data = await response.json();
         setMessages(data.messages || []);
-        setLastFetchTime(Date.now());
         setError(null);
       } else {
         throw new Error('Ошибка загрузки сообщений');
       }
-    } catch (error) {
-      console.error('Ошибка загрузки сообщений:', error);
+    } catch {
       setError('Не удалось загрузить сообщения');
     } finally {
       if (showLoading) setIsLoading(false);
     }
-  };
+  }, [eventId]);
 
   // Функция отправки сообщения
   const sendMessage = async (e: React.FormEvent) => {
@@ -86,7 +84,7 @@ export default function EventChat({ eventId, isOrganizer }: EventChatProps) {
         const errorData = await response.json();
         setError(errorData.error || 'Ошибка отправки сообщения');
       }
-    } catch (error) {
+    } catch {
       setError('Произошла ошибка при отправке сообщения');
     } finally {
       setIsSending(false);
@@ -111,7 +109,7 @@ export default function EventChat({ eventId, isOrganizer }: EventChatProps) {
         const errorData = await response.json();
         setError(errorData.error || 'Ошибка удаления сообщения');
       }
-    } catch (error) {
+    } catch {
       setError('Произошла ошибка при удалении сообщения');
     }
   };
@@ -159,7 +157,7 @@ export default function EventChat({ eventId, isOrganizer }: EventChatProps) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [eventId]);
+  }, [eventId, fetchMessages]);
 
   // Эффект для прокрутки к последнему сообщению при загрузке
   useEffect(() => {

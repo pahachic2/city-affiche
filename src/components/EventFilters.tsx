@@ -26,7 +26,7 @@ export default function EventFilters({ defaultCity, onFiltersChange }: EventFilt
       setFilters(newFilters);
       onFiltersChange?.(newFilters);
     }
-  }, [defaultCity]);
+  }, [defaultCity, filters, onFiltersChange]);
 
   const handleFilterChange = (key: string, value: string) => {
     const newFilters = { ...filters, [key]: value };

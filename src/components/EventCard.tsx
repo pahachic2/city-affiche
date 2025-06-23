@@ -64,10 +64,11 @@ export default function EventCard({ event, citySlug }: EventCardProps) {
         <div className="relative h-32 sm:h-40 md:h-48">
           {isBase64Image(event.image) ? (
             // Base64 изображение
-            <img
+            <Image
               src={event.image}
               alt={event.title}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
             />
           ) : (
             // URL изображение (для обратной совместимости)

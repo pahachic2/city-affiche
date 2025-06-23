@@ -5,12 +5,13 @@ import City from '@/models/City';
 // GET /api/cities/[slug] - получение города по slug
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await connectDB();
+    const { slug } = await params;
 
-    const city = await City.findOne({ slug: params.slug }).lean();
+    const city = await City.findOne({ slug }).lean();
 
     if (!city) {
       return NextResponse.json(
@@ -33,16 +34,17 @@ export async function GET(
 // PATCH /api/cities/[slug] - обновление города
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await connectDB();
+    const { slug } = await params;
 
     const body = await request.json();
     const { imageUrl, name } = body;
 
     // Находим город
-    const city = await City.findOne({ slug: params.slug });
+    const city = await City.findOne({ slug });
 
     if (!city) {
       return NextResponse.json(
@@ -90,12 +92,13 @@ export async function PATCH(
 // DELETE /api/cities/[slug] - удаление города
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await connectDB();
+    const { slug } = await params;
 
-    const city = await City.findOneAndDelete({ slug: params.slug });
+    const city = await City.findOneAndDelete({ slug });
 
     if (!city) {
       return NextResponse.json(

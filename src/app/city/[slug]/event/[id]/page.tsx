@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { Event, City } from '@/types';
-import { EVENT_CATEGORIES } from '@/types';
 import EventChat from '@/components/EventChat';
 
 // Форматирование даты
@@ -69,8 +69,7 @@ export default function EventPage() {
         setEvent(eventData);
         setCity(cityData);
         
-      } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
+      } catch {
         setError('Не удалось загрузить информацию о событии');
       } finally {
         setLoading(false);
@@ -93,7 +92,7 @@ export default function EventPage() {
           text: event?.description.substring(0, 100) + '...',
           url: url,
         });
-      } catch (error) {
+      } catch {
         // Пользователь отменил или ошибка
       }
     } else {
@@ -101,7 +100,7 @@ export default function EventPage() {
       try {
         await navigator.clipboard.writeText(url);
         alert('Ссылка скопирована!');
-      } catch (error) {
+      } catch {
         // Показываем URL для ручного копирования
         prompt('Скопируйте ссылку:', url);
       }
@@ -129,7 +128,7 @@ export default function EventPage() {
         const errorData = await response.json();
         alert(errorData.error || 'Ошибка удаления события');
       }
-    } catch (error) {
+    } catch {
       alert('Произошла ошибка при удалении события');
     }
   };
@@ -183,9 +182,11 @@ export default function EventPage() {
       {/* Hero секция с изображением */}
       {event.image && (
         <div className="w-full">
-          <img
+          <Image
             src={event.image.startsWith('data:') ? event.image : `/images/events/${event.image}`}
             alt={event.title}
+            width={1200}
+            height={400}
             className="w-full h-64 sm:h-80 lg:h-96 object-cover"
           />
         </div>

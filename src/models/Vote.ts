@@ -1,7 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { Vote } from '@/types';
 
-export interface IVote extends Omit<Vote, '_id'>, Document {}
+export interface IVote extends Document {
+  userId: mongoose.Types.ObjectId;
+  eventId: mongoose.Types.ObjectId;
+  value: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const VoteSchema = new Schema<IVote>({
   userId: {

@@ -85,7 +85,7 @@ export default function LoginForm() {
       } else {
         setErrors({ submit: result.error || 'Ошибка входа' });
       }
-    } catch (error) {
+    } catch {
       setErrors({ submit: 'Произошла ошибка. Попробуйте еще раз.' });
     } finally {
       setIsLoading(false);

@@ -71,8 +71,7 @@ export default function RedditEventCard({ event, onVote, citySlug }: RedditEvent
         onVote(event._id, voteType);
       }
       
-    } catch (error) {
-      console.error('Ошибка голосования:', error);
+    } catch {
       // Откатываем изменения при ошибке
       setUserVote(userVote);
       setCurrentRating(event.upvotes - event.downvotes);
@@ -93,7 +92,7 @@ export default function RedditEventCard({ event, onVote, citySlug }: RedditEvent
           text: event.description.substring(0, 100) + '...',
           url: url,
         });
-      } catch (error) {
+      } catch {
         // Пользователь отменил или ошибка
       }
     } else {
@@ -101,7 +100,7 @@ export default function RedditEventCard({ event, onVote, citySlug }: RedditEvent
       try {
         await navigator.clipboard.writeText(url);
         alert('Ссылка скопирована!');
-      } catch (error) {
+      } catch {
         // Показываем URL для ручного копирования
         prompt('Скопируйте ссылку:', url);
       }
@@ -164,10 +163,11 @@ export default function RedditEventCard({ event, onVote, citySlug }: RedditEvent
               <div className="relative w-full h-48 rounded-md overflow-hidden">
                 {event.image.startsWith('data:image/') ? (
                   // Base64 изображение
-                  <img
+                  <Image
                     src={event.image}
                     alt={event.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                    fill
+                    className="object-cover hover:scale-105 transition-transform duration-200"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';

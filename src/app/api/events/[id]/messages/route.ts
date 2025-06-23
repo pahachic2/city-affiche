@@ -8,10 +8,11 @@ import { verifyToken } from '@/lib/jwt';
 // GET /api/events/[id]/messages - получить сообщения события
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
@@ -19,7 +20,7 @@ export async function GET(
     const skip = (page - 1) * limit;
 
     // Проверяем существование события
-    const event = await Event.findById(params.id);
+    const event = await Event.findById(id);
     if (!event) {
       return NextResponse.json(
         { error: 'Событие не найдено' },
@@ -28,7 +29,7 @@ export async function GET(
     }
 
     // Получаем сообщения
-    const messages = await Message.find({ eventId: params.id })
+    const messages = await Message.find({ eventId: id })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -38,7 +39,7 @@ export async function GET(
     const sortedMessages = messages.reverse();
 
     // Получаем общее количество для пагинации
-    const total = await Message.countDocuments({ eventId: params.id });
+    const total = await Message.countDocuments({ eventId: id });
 
     return NextResponse.json({
       messages: sortedMessages,
@@ -63,10 +64,11 @@ export async function GET(
 // POST /api/events/[id]/messages - создать новое сообщение
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
     // Проверяем авторизацию
     const authHeader = request.headers.get('authorization');
@@ -87,7 +89,7 @@ export async function POST(
     }
 
     // Проверяем существование события
-    const event = await Event.findById(params.id);
+    const event = await Event.findById(id);
     if (!event) {
       return NextResponse.json(
         { error: 'Событие не найдено' },
@@ -124,7 +126,7 @@ export async function POST(
     // Проверяем лимит сообщений (не более 10 сообщений в минуту от одного пользователя)
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
     const recentMessagesCount = await Message.countDocuments({
-      eventId: params.id,
+      eventId: id,
       userId: decoded.userId,
       createdAt: { $gte: oneMinuteAgo }
     });
@@ -147,7 +149,7 @@ export async function POST(
 
     // Создаем сообщение
     const message = new Message({
-      eventId: params.id,
+      eventId: id,
       userId: decoded.userId,
       username: user.name,
       content: trimmedContent

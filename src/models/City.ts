@@ -36,6 +36,5 @@ const CitySchema = new Schema<ICity>({
 
 // Индексы для поиска
 CitySchema.index({ name: 'text' });
-CitySchema.index({ slug: 1 });
 
 export default mongoose.models.City || mongoose.model<ICity>('City', CitySchema); 

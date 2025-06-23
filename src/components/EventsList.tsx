@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Event } from '@/types';
 import EventCard from './EventCard';
 
@@ -13,11 +13,7 @@ export default function EventsList({ cityFilter }: EventsListProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchEvents();
-  }, [cityFilter]);
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -40,7 +36,11 @@ export default function EventsList({ cityFilter }: EventsListProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [cityFilter]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   if (loading) {
     return (

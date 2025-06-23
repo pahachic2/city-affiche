@@ -71,11 +71,11 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Ошибка при регистрации:', error);
     
     // Обработка ошибок дублирования (MongoDB unique constraint)
-    if (error.code === 11000) {
+    if (error instanceof Error && 'code' in error && (error as { code: number }).code === 11000) {
       return NextResponse.json(
         { error: 'Пользователь с таким email уже существует' },
         { status: 400 }

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { EVENT_CATEGORIES } from '@/types';
 import { 
@@ -39,7 +40,7 @@ export default function CreateEventForm({ city, citySlug }: CreateEventFormProps
   const [isCompressing, setIsCompressing] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const router = useRouter();
 
   // Валидация формы
@@ -150,7 +151,7 @@ export default function CreateEventForm({ city, citySlug }: CreateEventFormProps
       setImagePreview(base64);
       setImageSize(size);
       
-    } catch (error) {
+    } catch {
       setErrors(prev => ({ 
         ...prev, 
         image: 'Ошибка обработки изображения. Попробуйте другой файл.' 
@@ -207,16 +208,12 @@ export default function CreateEventForm({ city, citySlug }: CreateEventFormProps
 
       if (response.ok) {
         // Успешно создано - используем citySlug для перенаправления
-        const message = data.totalEventsCreated > 1 
-          ? `Создано ${data.totalEventsCreated} событий (включая повторяющиеся)`
-          : 'Событие успешно создано';
-        
         // Можно добавить toast уведомление здесь
         router.push(`/city/${citySlug}`);
       } else {
         setErrors({ submit: data.error || 'Ошибка создания мероприятия' });
       }
-    } catch (error) {
+    } catch {
       setErrors({ submit: 'Произошла ошибка. Попробуйте еще раз.' });
     } finally {
       setIsLoading(false);
@@ -343,9 +340,11 @@ export default function CreateEventForm({ city, citySlug }: CreateEventFormProps
           ) : (
             <div className="space-y-3">
               <div className="relative inline-block">
-                <img
+                <Image
                   src={imagePreview}
                   alt="Превью"
+                  width={300}
+                  height={200}
                   className="max-w-full h-48 object-cover rounded-lg border"
                 />
                 <button

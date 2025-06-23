@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 
 // Интерфейс пользователя (без пароля для клиента)
 export interface User {
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Функция проверки авторизации
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
       const userStr = localStorage.getItem(USER_KEY);
@@ -167,12 +167,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Ошибка проверки авторизации:', error);
       clearAuthData();
     }
-  };
+  }, []);
 
   // Проверяем авторизацию при монтировании
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   const contextValue: AuthContextType = {
     ...state,

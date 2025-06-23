@@ -3,7 +3,7 @@ import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
 // GET /api/users - получение списка пользователей
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await connectDB();
 

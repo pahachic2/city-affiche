@@ -63,10 +63,10 @@ export async function GET(request: NextRequest) {
 }
 
 // Функция для создания повторяющихся событий
-const createRecurringEvents = async (baseEvent: any, recurringType: 'weekly' | 'monthly', endDate: Date) => {
+const createRecurringEvents = async (baseEvent: Record<string, unknown>, recurringType: 'weekly' | 'monthly', endDate: Date) => {
   const events = [];
-  const startDate = new Date(baseEvent.date);
-  let currentDate = new Date(startDate);
+  const startDate = new Date(baseEvent.date as string);
+  const currentDate = new Date(startDate);
   
   // Добавляем интервал в зависимости от типа повторения
   while (currentDate <= endDate) {
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const authorId = authResult.user._id;
+    const authorId = authResult.user!._id;
 
     // Проверяем лимит событий на пользователя (максимум 4)
     const userEventsCount = await Event.countDocuments({ 

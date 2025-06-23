@@ -43,7 +43,7 @@ export const fileToBase64 = (file: File): Promise<string> => {
  */
 export const validateImageFile = (file: File): { isValid: boolean; error?: string } => {
   // Проверка типа файла
-  if (!SUPPORTED_IMAGE_TYPES.includes(file.type as any)) {
+  if (!SUPPORTED_IMAGE_TYPES.includes(file.type as typeof SUPPORTED_IMAGE_TYPES[number])) {
     return {
       isValid: false,
       error: 'Поддерживаются только форматы: JPEG, PNG, WebP, GIF'
@@ -79,7 +79,7 @@ export const isValidBase64Image = (base64: string): boolean => {
   }
   
   const mimeType = getImageMimeType(base64);
-  if (!mimeType || !SUPPORTED_IMAGE_TYPES.includes(mimeType as any)) {
+  if (!mimeType || !SUPPORTED_IMAGE_TYPES.includes(mimeType as typeof SUPPORTED_IMAGE_TYPES[number])) {
     return false;
   }
   

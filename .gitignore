@@ -115,3 +115,23 @@ logs
 
 # Turbo
 .turbo
+
+# Local development files
+*.local
+
+# Database dumps
+*.sql
+*.db
+*.sqlite
+
+# Backup files
+*.backup
+*.bak
+
+# Security files
+*.key
+*.cert
+*.crt
+
+# Keep env.example for reference
+!env.example

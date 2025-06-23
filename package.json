@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "init-prod": "node scripts/init-production.js",
+    "postbuild": "echo 'Build completed successfully!'",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",

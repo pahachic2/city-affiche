@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 require('dotenv').config({ path: '.env.local' });
 
 // Используем переменную окружения для подключения к MongoDB
-const MONGODB_URI = process.env.MONGODB_URI + 'city-affiche';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 // Подключение к MongoDB
 const connectDB = async () => {

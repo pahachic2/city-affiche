@@ -34,6 +34,21 @@ const connectOptions = {
   connectTimeoutMS: 10000, // Таймаут подключения 10 сек
 };
 
+// Функция для логирования с учетом окружения
+const log = {
+  info: (message: string, ...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(message, ...args);
+    }
+  },
+  error: (message: string, ...args: any[]) => {
+    console.error(message, ...args);
+  },
+  warn: (message: string, ...args: any[]) => {
+    console.warn(message, ...args);
+  }
+};
+
 async function connectDB(): Promise<typeof mongoose> {
   // Если уже подключены, возвращаем существующее подключение
   if (cached.conn && mongoose.connection.readyState === 1) {
@@ -54,13 +69,13 @@ async function connectDB(): Promise<typeof mongoose> {
   // Создаем новое подключение
   cached.promise = mongoose.connect(MONGODB_URI, connectOptions)
     .then((mongoose) => {
-      console.log('✅ Успешно подключено к MongoDB');
-      console.log(`📊 База данных: ${mongoose.connection.db?.databaseName || 'unknown'}`);
-      console.log(`🔗 Состояние подключения: ${mongoose.connection.readyState}`);
+      log.info('✅ Успешно подключено к MongoDB');
+      log.info(`📊 База данных: ${mongoose.connection.db?.databaseName || 'unknown'}`);
+      log.info(`🔗 Состояние подключения: ${mongoose.connection.readyState}`);
       return mongoose;
     })
     .catch((error) => {
-      console.error('❌ Ошибка подключения к MongoDB:', error.message);
+      log.error('❌ Ошибка подключения к MongoDB:', error.message);
       cached.promise = null;
       throw new Error(`Не удалось подключиться к MongoDB: ${error.message}`);
     });
@@ -70,17 +85,17 @@ async function connectDB(): Promise<typeof mongoose> {
     
     // Добавляем обработчики событий подключения
     mongoose.connection.on('error', (error) => {
-      console.error('🔥 Ошибка MongoDB:', error);
+      log.error('🔥 Ошибка MongoDB:', error);
     });
     
     mongoose.connection.on('disconnected', () => {
-      console.warn('⚠️  MongoDB отключена');
+      log.warn('⚠️  MongoDB отключена');
       cached.conn = null;
       cached.promise = null;
     });
 
     mongoose.connection.on('reconnected', () => {
-      console.log('🔄 MongoDB переподключена');
+      log.info('🔄 MongoDB переподключена');
     });
 
     return cached.conn;
@@ -101,7 +116,7 @@ export async function checkConnection(): Promise<boolean> {
     await connectDB();
     return (mongoose.connection.readyState as number) === 1;
   } catch (error) {
-    console.error('Ошибка проверки подключения:', error);
+    log.error('Ошибка проверки подключения:', error);
     return false;
   }
 }
@@ -112,7 +127,7 @@ export async function disconnectDB(): Promise<void> {
     await mongoose.disconnect();
     cached.conn = null;
     cached.promise = null;
-    console.log('🔌 Отключено от MongoDB');
+    log.info('🔌 Отключено от MongoDB');
   }
 }
 

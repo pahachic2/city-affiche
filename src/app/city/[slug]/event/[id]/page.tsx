@@ -183,7 +183,7 @@ export default function EventPage() {
       {event.image && (
         <div className="w-full">
           <Image
-            src={event.image.startsWith('data:') ? event.image : `/images/events/${event.image}`}
+            src={event.image}
             alt={event.title}
             width={1200}
             height={400}

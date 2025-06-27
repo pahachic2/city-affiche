@@ -64,6 +64,28 @@ export interface Vote {
   createdAt: Date;
 }
 
+export interface Venue {
+  _id: string;
+  name: string;
+  slug: string;
+  description: string;
+  images: string[];
+  imageTypes: string[];
+  address?: string;
+  city: string;
+  category: string;
+  authorId: string;
+  author?: User;
+  messages: Message[];
+  upvotes: number;
+  downvotes: number;
+  rating: number;
+  commentsCount: number;
+  viewsCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Вспомогательные типы
 export interface EventFilter {
   city?: string;
@@ -133,4 +155,31 @@ export const CITIES = [
   'Волгоград'
 ] as const;
 
-export type CityName = typeof CITIES[number]; 
+export type CityName = typeof CITIES[number];
+
+// Категории заведений
+export const VENUE_CATEGORIES = [
+  'Рестораны',
+  'Кафе',
+  'Бары', 
+  'Клубы',
+  'Музеи',
+  'Театры',
+  'Магазины',
+  'Спорт',
+  'Развлечения',
+  'Красота',
+  'Другое'
+] as const;
+
+export type VenueCategory = typeof VENUE_CATEGORIES[number];
+
+export interface CreateVenueData {
+  name: string;
+  description: string;
+  images?: string[];
+  imageTypes?: string[];
+  address?: string;
+  city: string;
+  category: VenueCategory;
+} 

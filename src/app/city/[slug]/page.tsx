@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import RedditEventCard from '@/components/RedditEventCard';
 import { Event, City } from '@/types';
@@ -11,6 +11,8 @@ interface CityPageProps {
 }
 
 export default function CityPage({ params }: CityPageProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [citySlug, setCitySlug] = useState<string>('');
   const [city, setCity] = useState<City | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
@@ -20,6 +22,7 @@ export default function CityPage({ params }: CityPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<'rating' | 'date' | 'comments'>('rating');
+  const [activeTab, setActiveTab] = useState<'events' | 'venues'>('events');
 
   // Инициализация параметров
   useEffect(() => {
@@ -27,6 +30,29 @@ export default function CityPage({ params }: CityPageProps) {
       setCitySlug(slug);
     });
   }, [params]);
+
+  // Инициализация активной вкладки из URL
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'venues') {
+      setActiveTab('venues');
+    } else {
+      setActiveTab('events');
+    }
+  }, [searchParams]);
+
+  // Функция для переключения вкладок
+  const handleTabChange = (tab: 'events' | 'venues') => {
+    setActiveTab(tab);
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (tab === 'events') {
+      newSearchParams.delete('tab');
+    } else {
+      newSearchParams.set('tab', tab);
+    }
+    const newUrl = `${window.location.pathname}${newSearchParams.toString() ? '?' + newSearchParams.toString() : ''}`;
+    router.push(newUrl);
+  };
 
   // Загрузка данных города
   useEffect(() => {
@@ -98,18 +124,19 @@ export default function CityPage({ params }: CityPageProps) {
     }
   }, [city, sortBy]);
 
-  // Первоначальная загрузка мероприятий
+  // Первоначальная загрузка мероприятий (только для вкладки событий)
   useEffect(() => {
-    if (city) {
+    if (city && activeTab === 'events') {
       setPage(1);
       fetchEvents(1, true);
     }
-  }, [city, sortBy, fetchEvents]);
+  }, [city, sortBy, fetchEvents, activeTab]);
 
-  // Бесконечная прокрутка
+  // Бесконечная прокрутка (только для вкладки событий)
   useEffect(() => {
     const handleScroll = () => {
       if (
+        activeTab === 'events' &&
         window.innerHeight + document.documentElement.scrollTop
         >= document.documentElement.offsetHeight - 1000 &&
         hasMore &&
@@ -122,7 +149,7 @@ export default function CityPage({ params }: CityPageProps) {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [page, hasMore, loadingMore, loading, fetchEvents]);
+  }, [page, hasMore, loadingMore, loading, fetchEvents, activeTab]);
 
   // Обработка голосования
   const handleVote = async (eventId: string, voteType: 'up' | 'down') => {
@@ -189,73 +216,122 @@ export default function CityPage({ params }: CityPageProps) {
               {city?.name}
             </h1>
             
-            {/* Сортировка */}
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500">Сортировка:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'rating' | 'date' | 'comments')}
-                className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white text-gray-900"
+            {/* Вкладки */}
+            <div className="flex items-center space-x-1 mb-4">
+              <button
+                onClick={() => handleTabChange('events')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === 'events'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
               >
-                <option value="rating" className="text-gray-900">🔥 Популярные</option>
-                <option value="date" className="text-gray-900">📅 Новые</option>
-                <option value="comments" className="text-gray-900">💬 Обсуждаемые</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Лента мероприятий */}
-          <div className="space-y-0">
-            {events.map((event) => (
-              <RedditEventCard
-                key={event._id}
-                event={event}
-                onVote={handleVote}
-                citySlug={citySlug}
-              />
-            ))}
-          </div>
-
-          {/* Состояния загрузки */}
-          {loading && events.length === 0 && (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            </div>
-          )}
-
-          {loadingMore && (
-            <div className="flex justify-center py-6">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
-            </div>
-          )}
-
-          {!loading && !loadingMore && events.length === 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-              <div className="text-6xl mb-4">🎭</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Пока нет мероприятий
-              </h3>
-              <p className="text-gray-600 mb-6">
-                В городе {city?.name} пока не добавлено ни одного мероприятия
-              </p>
-              <Link href={`/city/${citySlug}/create-event`}>
-              <button className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">
-                Добавить первое мероприятие
+                События
               </button>
-              </Link>
+              <button
+                onClick={() => handleTabChange('venues')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === 'venues'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Заведения
+              </button>
             </div>
-          )}
+            
+            {/* Сортировка (только для событий) */}
+            {activeTab === 'events' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">Сортировка:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'rating' | 'date' | 'comments')}
+                  className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white text-gray-900"
+                >
+                  <option value="rating" className="text-gray-900">🔥 Популярные</option>
+                  <option value="date" className="text-gray-900">📅 Новые</option>
+                  <option value="comments" className="text-gray-900">💬 Обсуждаемые</option>
+                </select>
+              </div>
+            )}
+          </div>
 
-          {!hasMore && events.length > 0 && (
-            <div className="text-center py-6">
-              <p className="text-gray-500">🎉 Вы просмотрели все мероприятия!</p>
-            </div>
+          {/* Контент в зависимости от активной вкладки */}
+          {activeTab === 'events' ? (
+            <>
+              {/* Лента мероприятий */}
+              <div className="space-y-0">
+                {events.map((event) => (
+                  <RedditEventCard
+                    key={event._id}
+                    event={event}
+                    onVote={handleVote}
+                    citySlug={citySlug}
+                  />
+                ))}
+              </div>
+
+              {/* Состояния загрузки для событий */}
+              {loading && events.length === 0 && (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              )}
+
+              {loadingMore && (
+                <div className="flex justify-center py-6">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                </div>
+              )}
+
+              {!loading && !loadingMore && events.length === 0 && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                  <div className="text-6xl mb-4">🎭</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Пока нет мероприятий
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    В городе {city?.name} пока не добавлено ни одного мероприятия
+                  </p>
+                  <Link href={`/city/${citySlug}/create-event`}>
+                  <button className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">
+                    Добавить первое мероприятие
+                  </button>
+                  </Link>
+                </div>
+              )}
+
+              {!hasMore && events.length > 0 && (
+                <div className="text-center py-6">
+                  <p className="text-gray-500">🎉 Вы просмотрели все мероприятия!</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Пустая вкладка заведений */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                <div className="text-6xl mb-4">🏪</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Пока нет заведений
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  В городе {city?.name} пока не добавлено ни одного заведения
+                </p>
+                <Link href={`/city/${citySlug}/add-venue`}>
+                <button className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">
+                  Добавить первое заведение
+                </button>
+                </Link>
+              </div>
+            </>
           )}
         </div>
 
-        {/* Плавающая кнопка создания мероприятия */}
+        {/* Плавающая кнопка создания */}
         <div className="fixed bottom-6 right-6">
-          <Link href={`/city/${citySlug}/create-event`}>
+          <Link href={activeTab === 'events' ? `/city/${citySlug}/create-event` : `/city/${citySlug}/add-venue`}>
           <button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg transition-all duration-200 hover:scale-110 flex items-center justify-center w-14 h-14 text-2xl font-bold active:scale-95">
             +
           </button>

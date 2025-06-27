@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { notFound, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import RedditEventCard from '@/components/RedditEventCard';
+import VenueCard from '@/components/VenueCard';
 import { Event, City } from '@/types';
 
 interface CityPageProps {
@@ -16,6 +17,7 @@ export default function CityPage({ params }: CityPageProps) {
   const [citySlug, setCitySlug] = useState<string>('');
   const [city, setCity] = useState<City | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
+  const [venues, setVenues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -124,13 +126,50 @@ export default function CityPage({ params }: CityPageProps) {
     }
   }, [city, sortBy]);
 
-  // Первоначальная загрузка мероприятий (только для вкладки событий)
-  useEffect(() => {
-    if (city && activeTab === 'events') {
-      setPage(1);
-      fetchEvents(1, true);
+  // Загрузка заведений
+  const fetchVenues = useCallback(async () => {
+    if (!city) return;
+    
+    try {
+      setLoading(true);
+      setVenues([]);
+
+      const params = new URLSearchParams({
+        city: city.name,
+        limit: '50', // Загружаем больше заведений за раз
+        sort: 'rating'
+      });
+
+      const response = await fetch(`/api/venues?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`Ошибка загрузки заведений: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const newVenues = data.venues || [];
+
+      setVenues(newVenues);
+
+    } catch (error) {
+      console.error('Ошибка загрузки заведений:', error);
+      setError('Не удалось загрузить заведения');
+    } finally {
+      setLoading(false);
     }
-  }, [city, sortBy, fetchEvents, activeTab]);
+  }, [city]);
+
+  // Первоначальная загрузка данных в зависимости от вкладки
+  useEffect(() => {
+    if (city) {
+      if (activeTab === 'events') {
+        setPage(1);
+        fetchEvents(1, true);
+      } else if (activeTab === 'venues') {
+        fetchVenues();
+      }
+    }
+  }, [city, sortBy, fetchEvents, fetchVenues, activeTab]);
 
   // Бесконечная прокрутка (только для вкладки событий)
   useEffect(() => {
@@ -151,8 +190,8 @@ export default function CityPage({ params }: CityPageProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [page, hasMore, loadingMore, loading, fetchEvents, activeTab]);
 
-  // Обработка голосования
-  const handleVote = async (eventId: string, voteType: 'up' | 'down') => {
+  // Обработка голосования за события
+  const handleEventVote = async (eventId: string, voteType: 'up' | 'down') => {
     try {
       const response = await fetch(`/api/events/${eventId}/vote`, {
         method: 'POST',
@@ -177,7 +216,37 @@ export default function CityPage({ params }: CityPageProps) {
         }));
       }
     } catch (error) {
-      console.error('Ошибка голосования:', error);
+      console.error('Ошибка голосования за событие:', error);
+    }
+  };
+
+  // Обработка голосования за заведения
+  const handleVenueVote = async (venueId: string, voteType: 'up' | 'down') => {
+    try {
+      const response = await fetch(`/api/venues/${venueId}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ voteType }),
+      });
+
+      if (response.ok) {
+        // Обновляем локальное состояние
+        setVenues(prev => prev.map(venue => {
+          if (venue._id === venueId) {
+            const newUpvotes = voteType === 'up' ? venue.upvotes + 1 : venue.upvotes;
+            const newDownvotes = voteType === 'down' ? venue.downvotes + 1 : venue.downvotes;
+            return {
+              ...venue,
+              upvotes: newUpvotes,
+              downvotes: newDownvotes,
+              rating: newUpvotes - newDownvotes
+            };
+          }
+          return venue;
+        }));
+      }
+    } catch (error) {
+      console.error('Ошибка голосования за заведение:', error);
     }
   };
 
@@ -266,7 +335,7 @@ export default function CityPage({ params }: CityPageProps) {
                   <RedditEventCard
                     key={event._id}
                     event={event}
-                    onVote={handleVote}
+                    onVote={handleEventVote}
                     citySlug={citySlug}
                   />
                 ))}
@@ -310,21 +379,41 @@ export default function CityPage({ params }: CityPageProps) {
             </>
           ) : (
             <>
-              {/* Пустая вкладка заведений */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-                <div className="text-6xl mb-4">🏪</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Пока нет заведений
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  В городе {city?.name} пока не добавлено ни одного заведения
-                </p>
-                <Link href={`/city/${citySlug}/add-venue`}>
-                <button className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">
-                  Добавить первое заведение
-                </button>
-                </Link>
+              {/* Лента заведений */}
+              <div className="space-y-0">
+                {venues.map((venue) => (
+                  <VenueCard
+                    key={venue._id}
+                    venue={venue}
+                    onVote={handleVenueVote}
+                    citySlug={citySlug}
+                  />
+                ))}
               </div>
+
+              {/* Состояния загрузки для заведений */}
+              {loading && venues.length === 0 && (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              )}
+
+              {!loading && venues.length === 0 && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                  <div className="text-6xl mb-4">🏪</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Пока нет заведений
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    В городе {city?.name} пока не добавлено ни одного заведения
+                  </p>
+                  <Link href={`/city/${citySlug}/add-venue`}>
+                    <button className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">
+                      Добавить первое заведение
+                    </button>
+                  </Link>
+                </div>
+              )}
             </>
           )}
         </div>

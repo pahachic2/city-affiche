@@ -7,7 +7,7 @@ import { verifyToken } from '@/lib/jwt';
 // GET /api/venues - Получение списка заведений
 export async function GET(request: NextRequest) {
   try {
-    await connectToDatabase();
+    await connectDB();
 
     const { searchParams } = new URL(request.url);
     const city = searchParams.get('city');
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
 // POST /api/venues - Создание нового заведения
 export async function POST(request: NextRequest) {
   try {
-    await connectToDatabase();
+    await connectDB();
 
     // Проверка авторизации
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
